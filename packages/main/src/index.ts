@@ -34,6 +34,7 @@ import { TrayMenu } from './tray-menu.js';
 import { isMac, isWindows, stoppedExtensions } from './util.js';
 
 let extensionLoader: ExtensionLoader | undefined;
+let pluginSystem: PluginSystem | undefined;
 
 // Main startup
 const podmanDesktopMain = new Main(app);
@@ -64,6 +65,11 @@ app.once('before-quit', event => {
     ?.stopAllExtensions()
     .then(() => {
       console.log('Stopped all extensions');
+      // Dispose the plugin system to clean up intervals and resources
+      if (pluginSystem) {
+        pluginSystem.dispose();
+        console.log('Disposed plugin system');
+      }
     })
     .catch((error: unknown) => {
       console.log('Error stopping extensions', error);
@@ -97,7 +103,7 @@ app.whenReady().then(
     const onDidCreatedConfigurationRegistry: Event<ConfigurationRegistry> = _onDidCreatedConfigurationRegistry.event;
 
     // Start extensions
-    const pluginSystem = new PluginSystem(trayMenu, podmanDesktopMain.mainWindowDeferred);
+    pluginSystem = new PluginSystem(trayMenu, podmanDesktopMain.mainWindowDeferred);
 
     onDidCreatedConfigurationRegistry(async (configurationRegistry: ConfigurationRegistry) => {
       // If we've manually set the tray icon color, update the tray icon. This can only be done

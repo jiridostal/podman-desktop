@@ -74,6 +74,7 @@ import { Emitter } from './events/emitter.js';
 import { LifecycleContextImpl, LoggerImpl } from './lifecycle-context.js';
 import { ProviderImpl } from './provider-impl.js';
 import { Telemetry } from './telemetry/telemetry.js';
+import type { IDisposable } from './types/disposable.js';
 import { Disposable } from './types/disposable.js';
 
 export type ProviderEventListener = (name: string, providerInfo: ProviderInfo) => void;
@@ -93,11 +94,12 @@ export type ContainerConnectionProviderLifecycleListener = (
  * subscribe to events to get notified about provider creation and lifecycle changes.
  */
 @injectable()
-export class ProviderRegistry {
+export class ProviderRegistry implements IDisposable {
   private count = 0;
   private providers: Map<string, ProviderImpl>;
   private providerStatuses = new Map<string, ProviderStatus>();
   private providerWarnings = new Map<string, ProviderInformation[]>();
+  private providerStatusCheckInterval: NodeJS.Timeout | undefined;
 
   private providerLifecycles: Map<string, ProviderLifecycle> = new Map();
   private providerLifecycleContexts: Map<string, LifecycleContextImpl> = new Map();
@@ -173,7 +175,7 @@ export class ProviderRegistry {
     // Every 2 seconds, we will check:
     // * The status of the providers
     // * Any new warnings or informations for each provider
-    setInterval(() => {
+    this.providerStatusCheckInterval = setInterval(() => {
       for (const [providerKey] of this.providers) {
         // Get the provider and its lifecycle
         const provider = this.providers.get(providerKey);
@@ -1542,5 +1544,46 @@ export class ProviderRegistry {
       }
     }
     return false;
+  }
+
+  dispose(): void {
+    // Clear the provider status check interval
+    if (this.providerStatusCheckInterval) {
+      clearInterval(this.providerStatusCheckInterval);
+      this.providerStatusCheckInterval = undefined;
+    }
+
+    // Dispose all emitters
+    this._onDidUpdateProvider.dispose();
+    this._onBeforeDidUpdateContainerConnection.dispose();
+    this._onDidUpdateContainerConnection.dispose();
+    this._onAfterDidUpdateContainerConnection.dispose();
+    this._onDidUpdateKubernetesConnection.dispose();
+    this._onDidUpdateVmConnection.dispose();
+    this._onDidUnregisterContainerConnection.dispose();
+    this._onDidUnregisterKubernetesConnection.dispose();
+    this._onDidUnregisterVmConnection.dispose();
+    this._onDidRegisterKubernetesConnection.dispose();
+    this._onDidRegisterVmConnection.dispose();
+    this._onDidRegisterContainerConnection.dispose();
+
+    // Clear all maps
+    this.providers.clear();
+    this.providerStatuses.clear();
+    this.providerWarnings.clear();
+    this.providerLifecycles.clear();
+    this.providerLifecycleContexts.clear();
+    this.providerInstallations.clear();
+    this.providerUpdates.clear();
+    this.providerAutostarts.clear();
+    this.providerCleanup.clear();
+    this.connectionLifecycleContexts.clear();
+    this.kubernetesProviders.clear();
+    this.vmProviders.clear();
+
+    // Clear all arrays
+    this.listeners.length = 0;
+    this.lifecycleListeners.length = 0;
+    this.containerConnectionLifecycleListeners.length = 0;
   }
 }

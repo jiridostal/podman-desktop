@@ -222,7 +222,7 @@ export interface LoggerWithEnd extends containerDesktopAPI.Logger {
   onEnd: () => void;
 }
 
-export class PluginSystem {
+export class PluginSystem implements IDisposable {
   // ready is when we've finished to initialize extension system
   private isReady = false;
 
@@ -238,6 +238,7 @@ export class PluginSystem {
   // The yet to be init ExtensionLoader
   private extensionLoader!: ExtensionLoader;
   private validExtList!: ExtensionInfo[];
+  private container: Container | undefined;
 
   constructor(
     private trayMenu: TrayMenu,
@@ -457,7 +458,8 @@ export class PluginSystem {
 
     // init api sender
     const apiSender = this.getApiSender(this.getWebContentsSender());
-    const container = new Container();
+    this.container = new Container();
+    const container = this.container;
     container.bind<ApiSenderType>(ApiSenderType).toConstantValue(apiSender);
     container.bind<TrayMenu>(TrayMenu).toConstantValue(this.trayMenu);
     container.bind<IconRegistry>(IconRegistry).toSelf().inSingletonScope();
@@ -3130,6 +3132,36 @@ export class PluginSystem {
 
   markAsExtensionsStarted(): void {
     this.isExtensionsStarted = true;
+  }
+
+  dispose(): void {
+    // Dispose all container singletons that implement IDisposable
+    if (this.container) {
+      try {
+        // Get and dispose ProviderRegistry
+        if (this.container.isBound(ProviderRegistry)) {
+          const providerRegistry = this.container.get<ProviderRegistry>(ProviderRegistry);
+          providerRegistry.dispose();
+        }
+
+        // Get and dispose other disposable services
+        if (this.container.isBound(ExtensionWatcher)) {
+          const extensionWatcher = this.container.get<ExtensionWatcher>(ExtensionWatcher);
+          extensionWatcher.dispose();
+        }
+
+        if (this.container.isBound(KubernetesClient)) {
+          const kubernetesClient = this.container.get<KubernetesClient>(KubernetesClient);
+          kubernetesClient.dispose();
+        }
+
+        // Clear the container
+        this.container.unbindAll();
+        this.container = undefined;
+      } catch (error) {
+        console.error('Error disposing PluginSystem container:', error);
+      }
+    }
   }
 
   markAsReady(): void {
