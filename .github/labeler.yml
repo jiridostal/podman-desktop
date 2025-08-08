@@ -1,0 +1,15 @@
+# Visual changes
+"area/ui":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "packages/renderer/**/*"
+      - "packages/ui/**/*"
+      - "storybook/**/*"
+      - "**/*.svelte"
+      - "**/*.css"
+
+# Website changes
+"area/website":
+  - changed-files:
+    - any-glob-to-any-file:
+      - "website/**/*"
