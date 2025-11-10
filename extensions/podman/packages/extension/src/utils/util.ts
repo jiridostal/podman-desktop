@@ -16,6 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
 
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import * as extensionApi from '@podman-desktop/api';
@@ -195,4 +196,43 @@ export async function getMultiplePodmanInstallationsWarnings(
     details: `You have multiple Podman instances in your PATH: ${podmanInstallations.join(', ')}. This may cause conflicts. Consider leaving one installation or configure custom binary path in the Podman extension settings to avoid issues.`,
   };
   return [warning];
+}
+
+export interface MachineConfigFileInfo {
+  file: string;
+  machineName: string;
+  machineFile: string;
+  json: { GvProxy?: string };
+}
+
+export async function readMachineConfigFiles(machineFolderToCheck: string): Promise<MachineConfigFileInfo[]> {
+  const files = await fs.promises.readdir(machineFolderToCheck);
+  const machineFilesToAnalyze = files.filter(file => file.endsWith('.json'));
+  let machineConfigJson: { GvProxy?: string } = {};
+  const machineFolderToCheckValue = machineFolderToCheck;
+  const allMachines = await Promise.all(
+    machineFilesToAnalyze.map(async file => {
+      // read content of the file
+      const absoluteFile = path.join(machineFolderToCheckValue, file);
+      try {
+        const machineConfigJsonRaw = await fs.promises.readFile(absoluteFile, 'utf-8');
+        machineConfigJson = JSON.parse(machineConfigJsonRaw);
+      } catch (error: unknown) {
+        console.error('Error reading machine file', file, error);
+      }
+      let machineName = file.replace('.json', '');
+      if (machineName !== 'podman-machine-default') {
+        machineName = `podman-${machineName}`;
+      }
+
+      return {
+        file,
+        machineName,
+        machineFile: absoluteFile,
+        json: machineConfigJson,
+      };
+    }),
+  );
+
+  return allMachines;
 }

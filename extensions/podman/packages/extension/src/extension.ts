@@ -78,6 +78,7 @@ import {
   getProviderByLabel,
   getProviderLabel,
   LoggerDelegator,
+  readMachineConfigFiles,
   VMTYPE,
 } from './utils/util';
 import { isDisguisedPodman } from './utils/warnings';
@@ -1151,33 +1152,7 @@ export function registerOnboardingRemoveUnsupportedMachinesCommand(): extensionA
     }
     if (machineFolderToCheck && isIncompatibleMachineOutput(machineListError) && fs.existsSync(machineFolderToCheck)) {
       // check for JSON files in the folder
-      const files = await fs.promises.readdir(machineFolderToCheck);
-      const machineFilesToAnalyze = files.filter(file => file.endsWith('.json'));
-      let machineConfigJson: { GvProxy?: string } = {};
-      const machineFolderToCheckValue = machineFolderToCheck;
-      const allMachines = await Promise.all(
-        machineFilesToAnalyze.map(async file => {
-          // read content of the file
-          const absoluteFile = path.join(machineFolderToCheckValue, file);
-          try {
-            const machineConfigJsonRaw = await fs.promises.readFile(absoluteFile, 'utf-8');
-            machineConfigJson = JSON.parse(machineConfigJsonRaw);
-          } catch (error: unknown) {
-            console.error('Error reading machine file', file, error);
-          }
-          let machineName = file.replace('.json', '');
-          if (machineName !== 'podman-machine-default') {
-            machineName = `podman-${machineName}`;
-          }
-
-          return {
-            file,
-            machineName,
-            machineFile: absoluteFile,
-            json: machineConfigJson,
-          };
-        }),
-      );
+      const allMachines = await readMachineConfigFiles(machineFolderToCheck);
 
       const invalidMachines = allMachines.filter(machine => {
         // check if the machine has GvProxy field, if it doesn't, it's an invalid machine
