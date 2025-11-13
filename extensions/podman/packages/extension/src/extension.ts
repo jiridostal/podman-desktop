@@ -899,6 +899,16 @@ export async function stopMachine(
   const telemetryRecords: Record<string, unknown> = {};
   telemetryRecords.provider = machineInfo.vmType;
   try {
+    if (provider.status === 'starting') {
+      const jsonPath = path.resolve(os.homedir(), appConfigDir(), 'machine', machineInfo.vmType);
+      const machineConfigFiles = await readMachineConfigFiles(jsonPath);
+      for (const machineConfigFile of machineConfigFiles) {
+        if (machineConfigFile.machineName === machineInfo.name) {
+          machineConfigFile.json.Starting = false;
+          await fs.promises.writeFile(machineConfigFile.machineFile, JSON.stringify(machineConfigFile.json, null, 2));
+        }
+      }
+    }
     await execPodman(['machine', 'stop', machineInfo.name], machineInfo.vmType, {
       logger: new LoggerDelegator(context, logger),
     });

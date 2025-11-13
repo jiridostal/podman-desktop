@@ -87,7 +87,7 @@ async function stopConnectionProvider(
   providerConnectionInfo: ProviderConnectionInfo,
 ): Promise<void> {
   try {
-    if (providerConnectionInfo.status === 'started') {
+    if (providerConnectionInfo.status.includes('start')) {
       updateConnectionStatus(provider, providerConnectionInfo, 'stop');
       const loggerHandlerKey = registerConnectionCallback(getLoggerHandler(provider, providerConnectionInfo));
       await window.stopProviderConnectionLifecycle(

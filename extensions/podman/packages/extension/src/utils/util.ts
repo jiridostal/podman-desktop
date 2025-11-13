@@ -202,7 +202,7 @@ export interface MachineConfigFileInfo {
   file: string;
   machineName: string;
   machineFile: string;
-  json: { GvProxy?: string };
+  json: { GvProxy?: string; Starting?: boolean };
 }
 
 export async function readMachineConfigFiles(machineFolderToCheck: string): Promise<MachineConfigFileInfo[]> {
