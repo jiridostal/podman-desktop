@@ -342,7 +342,7 @@ describe('Contributions', () => {
     expect(fedoraOld).toBeInTheDocument();
 
     // now check that there is a custom icon for status column
-    const statusElement = screen.getByRole('status', { name: 'UNUSED' });
+    const statusElement = screen.getByRole('status', { name: 'Status Icon State' });
 
     // now assert status item contains the icon
     const subElement = statusElement.getElementsByClassName('podman-desktop-icon-my-custom-icon');

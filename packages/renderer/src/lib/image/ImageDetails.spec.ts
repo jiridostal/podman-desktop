@@ -195,8 +195,9 @@ describe('expect display usage of an image', () => {
     });
 
     //  now check that we have the image saying it's in used
-    const usage = screen.getByRole('status', { name: 'USED' });
+    const usage = screen.getByRole('status', { name: 'Status Icon State' });
     expect(usage).toBeInTheDocument();
+    expect(usage).toHaveAttribute('title', 'USED');
   });
 
   test('expect unused', async () => {
@@ -226,9 +227,10 @@ describe('expect display usage of an image', () => {
       base64RepoTag: Buffer.from('<none>', 'binary').toString('base64'),
     });
 
-    //  now check that we have the image saying it's in used
-    const usage = screen.getByRole('status', { name: 'UNUSED' });
+    //  now check that we have the image saying it's unused
+    const usage = screen.getByRole('status', { name: 'Status Icon State' });
     expect(usage).toBeInTheDocument();
+    expect(usage).toHaveAttribute('title', 'UNUSED');
   });
 });
 
@@ -332,7 +334,7 @@ test.each([
   });
 
   // grab status icon of the image
-  const statusElement = screen.getByRole('status', { name: 'UNUSED' });
+  const statusElement = screen.getByRole('status', { name: 'Status Icon State' });
   expect(statusElement).toBeInTheDocument();
 
   // now assert status item contains the icon
