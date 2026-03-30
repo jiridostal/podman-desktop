@@ -52,7 +52,7 @@ export class KubernetesResourceDetailsPage extends DetailsPage {
 
   async getState(): Promise<string> {
     return test.step('Get resource state', async () => {
-      const currentState = await this.header.getByRole('status').getAttribute('title');
+      const currentState = await this.header.getByRole('status', { name: 'Status Icon State' }).getAttribute('title');
       return currentState ?? KubernetesResourceState.Unknown;
     });
   }

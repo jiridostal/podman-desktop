@@ -54,7 +54,7 @@ export class PodDetailsPage extends DetailsPage {
 
   async getState(): Promise<string> {
     return test.step('Get Pod State', async () => {
-      const currentState = await this.header.getByRole('status').getAttribute('title');
+      const currentState = await this.header.getByRole('status', { name: 'Status Icon State' }).getAttribute('title');
       for (const state of Object.values(PodState)) {
         if (currentState === state) return state;
       }

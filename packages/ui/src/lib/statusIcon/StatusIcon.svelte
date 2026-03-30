@@ -31,6 +31,7 @@ let solid = $derived(status === 'RUNNING' || status === 'STARTING' || status ===
     class:text-[var(--pd-status-not-running)]={!solid}
     class:text-[var(--pd-status-contrast)]={solid}
     role="status"
+    aria-label="Status Icon State"
     title={status}>
     {#if status === 'DELETING' || status === 'UPDATING'}
       <Spinner size="1.4em" />
